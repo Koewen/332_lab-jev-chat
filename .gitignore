@@ -8,6 +8,12 @@
 *.class
 local.properties
 
+# Windows desktop build
+.venv-windows/
+/dist/
+/*.spec
+.pytest_cache/
+
 # Machine-specific
 env.ps1
 gradle.properties.local

@@ -70,6 +70,24 @@ adb install -r apk/jev-assistant-v1.1-release.apk
 
 之前装过 debug 包的要先卸载再装（签名不同，覆盖会失败），卸载会清掉已填的密钥和设置。小米 / HyperOS 重装后悬浮窗权限会被重置，装完按主页向导再开一次。
 
+## Windows 电脑版微信
+
+仓库现已包含独立的 Windows 桌面版，支持 `Weixin.exe` / `WeChat.exe`。它优先读取 Windows UI Automation；电脑版微信不暴露消息控件时，自动改用本地 OCR 识别用户框选的可见聊天区。Windows 版直连 TypeSafe Jev API 做结构化判断；可选配置 DeepSeek API，根据 Jev 判断生成三条建议回复。建议只能复制，不会自动填写或发送。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\windows\install.ps1
+powershell -ExecutionPolicy Bypass -File .\windows\start.ps1
+```
+
+构建可分发程序：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\windows\build.ps1
+# 产物：dist\Jev微信助手\Jev微信助手.exe
+```
+
+详细配置、隐私边界和使用步骤见 [`windows/README.md`](windows/README.md)。
+
 ## 构建
 
 需要 JDK 17 + Android SDK（platform 35 / build-tools 35）。
