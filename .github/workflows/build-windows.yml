@@ -1,0 +1,47 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r windows/requirements-dev.txt
+
+      - name: Build executable with PyInstaller
+        run: |
+          python -m PyInstaller `
+            --noconfirm `
+            --clean `
+            --windowed `
+            --name "Jev微信助手" `
+            --paths . `
+            --collect-all rapidocr_onnxruntime `
+            --collect-all uiautomation `
+            --hidden-import win32timezone `
+            windows/run.pyw
+
+      - name: List dist contents
+        run: Get-ChildItem -Recurse dist | Select-Object FullName, Length
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jev-windows
+          path: dist/
+          if-no-files-found: error
