@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      JEV_KEYSTORE_PROPS: /tmp/jev-release.properties
 
     steps:
       - name: Checkout
@@ -39,16 +41,15 @@ jobs:
       - name: Generate throwaway keystore for release signing
         run: |
           keytool -genkeypair -v \
-            -keystore "$RUNNER_TEMP/jev-release.jks" \
+            -keystore /tmp/jev-release.jks \
             -alias jev -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass jevbuild123 -keypass jevbuild123 \
             -dname "CN=Jev CI Build, OU=CI, O=Jev, L=NA, ST=NA, C=CN"
           printf 'storeFile=%s\nstorePassword=jevbuild123\nkeyAlias=jev\nkeyPassword=jevbuild123\n' \
-            "$RUNNER_TEMP/jev-release.jks" > "$RUNNER_TEMP/jev-release.properties"
+            /tmp/jev-release.jks > /tmp/jev-release.properties
+          cat /tmp/jev-release.properties
 
       - name: Build release APK
-        env:
-          JEV_KEYSTORE_PROPS: ${{ runner.temp }}/jev-release.properties
         run: ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Show output files
