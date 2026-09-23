@@ -19,8 +19,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Install required Android SDK components
+        run: |
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -1)
+          echo "sdkmanager path: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools" 2>&1 | tail -8 || true
+          echo "--- platforms ---"
+          ls "$ANDROID_HOME/platforms" 2>/dev/null || true
+          echo "--- build-tools ---"
+          ls "$ANDROID_HOME/build-tools" 2>/dev/null || true
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -37,7 +45,6 @@ jobs:
             -dname "CN=Jev CI Build, OU=CI, O=Jev, L=NA, ST=NA, C=CN"
           printf 'storeFile=%s\nstorePassword=jevbuild123\nkeyAlias=jev\nkeyPassword=jevbuild123\n' \
             "$RUNNER_TEMP/jev-release.jks" > "$RUNNER_TEMP/jev-release.properties"
-          cat "$RUNNER_TEMP/jev-release.properties"
 
       - name: Build release APK
         env:
