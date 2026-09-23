@@ -1,0 +1,57 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Generate throwaway keystore for release signing
+        run: |
+          keytool -genkeypair -v \
+            -keystore "$RUNNER_TEMP/jev-release.jks" \
+            -alias jev -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass jevbuild123 -keypass jevbuild123 \
+            -dname "CN=Jev CI Build, OU=CI, O=Jev, L=NA, ST=NA, C=CN"
+          printf 'storeFile=%s\nstorePassword=jevbuild123\nkeyAlias=jev\nkeyPassword=jevbuild123\n' \
+            "$RUNNER_TEMP/jev-release.jks" > "$RUNNER_TEMP/jev-release.properties"
+          cat "$RUNNER_TEMP/jev-release.properties"
+
+      - name: Build release APK
+        env:
+          JEV_KEYSTORE_PROPS: ${{ runner.temp }}/jev-release.properties
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Show output files
+        run: find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: jev-android-apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
